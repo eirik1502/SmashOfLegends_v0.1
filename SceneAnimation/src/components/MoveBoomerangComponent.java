@@ -5,9 +5,11 @@ import main.SceneNode;
 import maths.Mat4;
 import maths.TrigUtils;
 import maths.Vec2;
+import physics.PhysicsComponent;
 
 public class MoveBoomerangComponent extends Component{
 
+	private PhysicsComponent physicsComponent;
 	
 	private Vec2 speed;
 	private Vec2 accel;
@@ -25,11 +27,12 @@ public class MoveBoomerangComponent extends Component{
 		
 		accel = new Vec2();
 		accel.setLendir(accelLen, speed.getDirection());
-		System.out.println("Acceleration: "+ accelLen+"\nv0: " + startSpeed);
+		//System.out.println("Acceleration: "+ accelLen+"\nv0: " + startSpeed);
 	}
 	
 	@Override
 	protected void start() {
+		physicsComponent = (PhysicsComponent) getOwner().getComponent(PhysicsComponent.class);
 	}
 
 	@Override
@@ -37,10 +40,9 @@ public class MoveBoomerangComponent extends Component{
 		SceneNode p = getOwner();
 		
 		speed = speed.add(accel.scale(deltaTime));
-		Vec2 scaledSpeed = speed.scale(deltaTime);
+		//Vec2 scaledSpeed = speed.scale(deltaTime);
 		
-		p.setX(p.getX() + scaledSpeed.x);
-		p.setY(p.getY() + scaledSpeed.y);
+		physicsComponent.setVelocity(speed);
 	}
 
 	@Override

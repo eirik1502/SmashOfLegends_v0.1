@@ -14,9 +14,15 @@ public class Vec2 {
 		this.y = y;
 	}
 	
+	public static Vec2 createLendir(float length, float dir) {
+		Vec2 v = new Vec2();
+		v.setLendir(length, dir);
+		return v;
+	}
+	
 	public void setLendir(float length, float direction) {
-		x = (float)Math.cos(direction)*length;
-		y = (float)Math.sin(direction)*length;
+		x = M.cos(direction)*length;
+		y = M.sin(direction)*length;
 	}
 	
 
@@ -44,10 +50,13 @@ public class Vec2 {
 	}
 	
 	public float getLength() {
-		return (float)Math.sqrt(x*x + y*y);
+		return M.sqrt(x*x + y*y);
+	}
+	public float getLengthSquared() {
+		return x*x + y*y;
 	}
 	public float getDirection() {
-		return (float)Math.atan2(y, x);
+		return M.atan2(y, x);
 	}
 	
 	public boolean isNull() {

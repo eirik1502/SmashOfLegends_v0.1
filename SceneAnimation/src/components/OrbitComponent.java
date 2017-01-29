@@ -1,6 +1,7 @@
 package components;
 
 import main.Component;
+import maths.M;
 import maths.Mat4;
 import maths.TrigUtils;
 
@@ -25,8 +26,8 @@ public class OrbitComponent extends Component {
 	@Override
 	protected void update(float deltaTime) {
 		currAngle += angleSpeed*deltaTime;
-		getOwner().setX(TrigUtils.cos(currAngle) * orbitRadius);
-		getOwner().setY(TrigUtils.sin(currAngle) * orbitRadius);
+		getOwner().setX(M.cos(currAngle) * orbitRadius);
+		getOwner().setY(M.sin(currAngle) * orbitRadius);
 	}
 
 	@Override

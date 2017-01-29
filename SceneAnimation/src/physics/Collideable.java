@@ -1,4 +1,4 @@
-package main;
+package physics;
 
 public interface Collideable {
 

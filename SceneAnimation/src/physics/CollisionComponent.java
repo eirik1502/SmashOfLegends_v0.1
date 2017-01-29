@@ -1,13 +1,14 @@
-package components;
+package physics;
 
-import main.Collideable;
 import main.Component;
-import main.PhShape;
 import main.SceneNode;
 import maths.Mat4;
 
-public class CollisionComponent extends Component implements Collideable{
+public class CollisionComponent extends Component{
 
+	
+	private PhysicsComponent physicsComponent;
+	
 	
 	private PhShape collisionShape;
 	
@@ -19,8 +20,9 @@ public class CollisionComponent extends Component implements Collideable{
 	
 	@Override
 	protected void start() {
-		// TODO Auto-generated method stub
+		physicsComponent = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
 		
+		super.getEngine().addCollideable(this);
 	}
 
 	@Override
@@ -36,9 +38,12 @@ public class CollisionComponent extends Component implements Collideable{
 		
 	}
 
-	@Override
 	public PhShape getPhShape() {
 		return collisionShape;
+	}
+	
+	public PhysicsComponent getPhysicsComponent() {
+		return physicsComponent;
 	}
 
 }

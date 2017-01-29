@@ -9,6 +9,7 @@ import main.Window;
 import maths.Mat4;
 import maths.TrigUtils;
 import maths.Vec2;
+import physics.PhysicsComponent;
 
 public class CharacterComponent extends Component{
 
@@ -19,7 +20,7 @@ public class CharacterComponent extends Component{
 
 	private CharacterInputState inputState = new CharacterInputState();
 	
-	private float moveSpeed = 256f;
+	private float moveAccel = 1000;
 	
 	
 	public static final byte IDLE_STATE = 0, MOVE_STATE = 1, ABILITY_STATE = 2;
@@ -37,6 +38,8 @@ public class CharacterComponent extends Component{
 		
 		ability1 = (BoomerangProjectileAbility) super.getOwner().getComponent(BoomerangProjectileAbility.class);
 		ability2 = (LineProjectileAbility) super.getOwner().getComponent(LineProjectileAbility.class);
+		
+		physicsComp.setFrictionConst(0.1f);
 	}
 	@Override
 	protected void update(float deltaTime) {
@@ -51,21 +54,21 @@ public class CharacterComponent extends Component{
 	private void updateWalk(SceneNode p, Engine e) {
 		if (inState(ABILITY_STATE)) return;
 		
-		Vec2 currVelocity = new Vec2();
+		Vec2 currAccel = new Vec2();
 		
-		currVelocity.x = (inputState.getMoveRight() ? 1f : 0f)
+		currAccel.x = (inputState.getMoveRight() ? 1f : 0f)
 				- (inputState.getMoveLeft() ? 1f : 0f);
 		
-		currVelocity.y = (inputState.getMoveDown() ? 1f : 0f)
+		currAccel.y = (inputState.getMoveDown() ? 1f : 0f)
 				- (inputState.getMoveUp() ? 1f : 0f);
 		
-		currVelocity = currVelocity.scale( moveSpeed );
+		currAccel = currAccel.scale( moveAccel );
 		
 		
 		
-		physicsComp.setVelocity(currVelocity);
+		physicsComp.setAcceleration(currAccel);
 		
-		if (!currVelocity.isNull()) {
+		if (!currAccel.isNull()) {
 			//physicsComp.setVelocity(currVelocity);
 		}
 		else if (inState(MOVE_STATE)) {

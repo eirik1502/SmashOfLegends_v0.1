@@ -6,14 +6,17 @@ import org.lwjgl.opengl.GL11;
 import components.BoomerangProjectileAbility;
 import components.CharacterAnimationComponent;
 import components.CharacterComponent;
-import components.CollisionComponent;
 import components.ControllableComponent;
 import components.LineProjectileAbility;
 import components.OrbitComponent;
-import components.PhysicsComponent;
 import components.RenderComponent;
+import components.SeekPointComponent;
 import components.ShootComponent;
 import maths.Mat4;
+import physics.CollisionComponent;
+import physics.PhCircle;
+import physics.PhysicsComponent;
+import physics.PhysicsEngine;
 import utils.ShaderUtils;
 import utils.VertexArrayUtils;
 
@@ -41,6 +44,7 @@ public class Game {
 	
 	public void init() {
 		engine = new Engine();
+		
 		engine.setWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		engine.setWindowTitle("Barrarrarararrrrara");
 		
@@ -50,11 +54,16 @@ public class Game {
 		engine.init();
 		engine.enableUserInput();
 		
-		createPlayer(root, 100, 100);
+		SceneNode p = createPlayer(root, 100, 100);
+		SceneNode[] es = new SceneNode[10];
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 10; j++) {
+				SceneNode e = createEnemy(root, 100*i+100, 100*j + 100);
+				
+			}
+		}
 		
-		SceneNode e = createEnemy(root, 800, 800);
-		
-		engine.assignCollideable((CollisionComponent)e.getComponent(CollisionComponent.class));
+		createWall(root, WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 200);
 		
 //		float[] animData = {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0,
 //							0,0,0, 0,0,0, 0,0,0, 8,0,0, 8,0,0};
@@ -72,6 +81,23 @@ public class Game {
 	}
 	
 	//public Collideable collideEnemy
+	private SceneNode createWall(SceneNode root, float x, float y, float radius) {
+		VertexArray vao = VertexArrayUtils.createRectangle(radius*2, radius*2);
+		
+		SceneNode n = new SceneNode();
+		
+		n.addComponent(new RenderComponent(vao, radius, radius));
+		
+		n.addComponent(new CollisionComponent(new PhCircle(radius)));
+		n.addComponent(new PhysicsComponent(0, 0.5f, 0.5f) );
+		//nEnemy.addComponent(new SeekPositionComponent(x, y));
+		
+		n.setX(x);
+		n.setY(y);
+		root.addChild(n);
+		
+		return n;
+	}
 	
 	private SceneNode createEnemy(SceneNode root, float x, float y) {
 		VertexArray vaoEnemy = VertexArrayUtils.createRectangle(32, 32);
@@ -79,6 +105,10 @@ public class Game {
 		SceneNode nEnemy = new SceneNode();
 		
 		nEnemy.addComponent(new RenderComponent(vaoEnemy, 16, 16));
+		nEnemy.addComponent(new SeekPointComponent(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 50) );
+	
+		nEnemy.addComponent(new CollisionComponent(new PhCircle(16)));
+		nEnemy.addComponent(new PhysicsComponent(10, 0.5f, 0.0005f) );
 		
 		nEnemy.setX(x);
 		nEnemy.setY(y);
@@ -191,10 +221,11 @@ public class Game {
 		nCharacter.addComponent(animComp );
 
 		nCharacter.addComponent(new BoomerangProjectileAbility("wave", 1f, 0.24f, 0.1f, 15, 0.6f, 500) );
-		nCharacter.addComponent(new LineProjectileAbility("dab", 0.2f, 0.1f, 0.08f, 10, 10) );
+		nCharacter.addComponent(new LineProjectileAbility("dab", 0.2f, 0.1f, 0.08f, 800, 10) );
 		
 		nCharacter.addComponent(new CharacterComponent() );
-		nCharacter.addComponent(new PhysicsComponent() );
+		nCharacter.addComponent(new PhysicsComponent(80, 0.2f) );
+		nCharacter.addComponent(new CollisionComponent(new PhCircle(16)));
 		nCharacter.addComponent(new ControllableComponent() ); //input delayed 1 frame
 		
 		nCharacter.setX(x);

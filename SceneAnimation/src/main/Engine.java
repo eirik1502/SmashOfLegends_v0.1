@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import org.lwjgl.opengl.GL11;
 
 import maths.Mat4;
+import physics.Collideable;
+import physics.CollisionComponent;
+import physics.PhysicsEngine;
 import utils.VertexArrayUtils;
 
 public class Engine {
@@ -18,6 +21,7 @@ public class Engine {
 	private Mat4 projectionTransform;
 	private SceneNode root;
 	
+	private PhysicsEngine physicsEngine;
 	
 	private boolean initialized = false;
 	
@@ -31,8 +35,6 @@ public class Engine {
     private boolean[] mouseButtonPressed = new boolean[16];
 	
 	
-    
-    private ArrayList<Collideable> collideables = new ArrayList<>();
 	
 	
 	public void setWindowSize(float width, float height) {
@@ -85,6 +87,9 @@ public class Engine {
 		shader = new BasicShader();
 		
 		projectionTransform = Mat4.orthographic(0.0f, windowWidth, windowHeight, 0.0f, 1.0f, -1.0f);
+		
+		physicsEngine = new PhysicsEngine();
+		
 		initialized = true;
 	}
 	private void checkInitState() {
@@ -129,6 +134,8 @@ public class Engine {
 		Window.pollIoEvents();
 		
 		root.update(deltaTime);
+		
+		physicsEngine.resolve();
 	}
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -160,18 +167,10 @@ public class Engine {
 		shader.unbind();
 	}
 	
-	public void assignCollideable(Collideable c) {
-		collideables.add(c);
+
+	public void addCollideable(CollisionComponent c) {
+		physicsEngine.addCollideable(c);
 	}
-	public SceneNode collide(Class<?> type) {
-		for (Collideable c : collideables) {
-			if (type.isInstance(c)) {
-				return (SceneNode) c;
-			}
-		}
-		return null;
-	}
-	
 	
     public float getMouseX() {
         return mouseX;

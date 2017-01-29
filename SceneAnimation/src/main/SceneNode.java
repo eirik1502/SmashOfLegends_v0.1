@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import maths.Mat4;
+import maths.Vec2;
 import maths.Vec3;
 
 public class SceneNode {
@@ -146,6 +147,11 @@ public class SceneNode {
 	
 	public void addY(float dy) {
 		setY(getY() + dy);
+	}
+	
+	public void addPosXY(Vec2 pos) {
+		addX(pos.x);
+		addY(pos.y);
 	}
 
 	public float getZ() {

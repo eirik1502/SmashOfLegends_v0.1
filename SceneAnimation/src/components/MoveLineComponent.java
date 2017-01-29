@@ -2,30 +2,35 @@ package components;
 
 import main.Component;
 import main.SceneNode;
+import maths.M;
 import maths.Mat4;
 import maths.TrigUtils;
+import maths.Vec2;
+import physics.PhysicsComponent;
 
 public class MoveLineComponent extends Component {
 
+	private PhysicsComponent physicsComp;
 	
-	private float deltaX;
-	private float deltaY;
+	private Vec2 initVelocity;
 	
 	
 	public MoveLineComponent(float direction, float speed) {
-		deltaX = TrigUtils.cos(direction) * speed;
-		deltaY = TrigUtils.sin(direction) * speed;
+		initVelocity = Vec2.createLendir(speed, direction);
 	}
 	
 	@Override
 	protected void start() {
+		physicsComp = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
+		
+		physicsComp.addVelocity(initVelocity);
 	}
 
 	@Override
 	protected void update(float deltaTime) {
-		SceneNode p = getOwner();
-		p.setX(p.getX() + deltaX);
-		p.setY(p.getY() + deltaY);
+//		SceneNode p = getOwner();
+//		p.setX(p.getX() + deltaX);
+//		p.setY(p.getY() + deltaY);
 	}
 
 	@Override

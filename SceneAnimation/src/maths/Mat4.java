@@ -53,8 +53,8 @@ public class Mat4 {
 	public static Mat4 rotate(float angle) {
 		Mat4 result = identity();
 		float r = angle;
-		float cos = (float) Math.cos(r);
-		float sin = (float) Math.sin(r);
+		float cos = (float) M.cos(r);
+		float sin = (float) M.sin(r);
 		
 		result.elements[0 + 0 * 4] = cos;
 		result.elements[1 + 0 * 4] = sin;

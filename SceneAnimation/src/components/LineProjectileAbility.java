@@ -2,6 +2,10 @@ package components;
 
 import main.SceneNode;
 import main.VertexArray;
+import maths.TrigUtils;
+import physics.CollisionComponent;
+import physics.PhCircle;
+import physics.PhysicsComponent;
 import utils.VertexArrayUtils;
 
 public class LineProjectileAbility extends CharacterAbilityComponent {
@@ -36,12 +40,17 @@ public class LineProjectileAbility extends CharacterAbilityComponent {
 		float sx = getOwner().getGlobalX();
 		float sy = getOwner().getGlobalY();
 		
+		float ownerRadius = 16;
+		
 		SceneNode b = new SceneNode();
 		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
 		b.addComponent(new MoveLineComponent(direction, bulletSpeed) );
 
-		b.setX(sx);
-		b.setY(sy);
+		b.setX(sx + TrigUtils.lengthdirX(ownerRadius, direction));
+		b.setY(sy + TrigUtils.lengthdirY(ownerRadius, direction));
+		
+		b.addComponent(new CollisionComponent(new PhCircle(bulletRadius)));
+		b.addComponent(new PhysicsComponent(40) );
 		
 		super.rootAddChild(b);
 	}

@@ -2,6 +2,9 @@ package components;
 
 import main.SceneNode;
 import main.VertexArray;
+import physics.CollisionComponent;
+import physics.PhCircle;
+import physics.PhysicsComponent;
 import utils.VertexArrayUtils;
 
 public class BoomerangProjectileAbility extends CharacterAbilityComponent {
@@ -23,7 +26,7 @@ public class BoomerangProjectileAbility extends CharacterAbilityComponent {
 
 	@Override
 	protected boolean onTrigger() {
-		System.out.println("Ability triggered");
+		//System.out.println("Ability triggered");
 		return true;
 	}
 	
@@ -41,9 +44,13 @@ public class BoomerangProjectileAbility extends CharacterAbilityComponent {
 		
 		SceneNode b = new SceneNode();
 		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
+		
 		b.addComponent(new MoveBoomerangComponent(direction, bulletTurnTime, bulletTurnRadius));
 		b.setX(sx);
 		b.setY(sy);
+		
+		b.addComponent(new CollisionComponent(new PhCircle(16f)));
+		b.addComponent(new PhysicsComponent(60) );
 		
 		super.rootAddChild(b);
 	}
