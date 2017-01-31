@@ -12,10 +12,14 @@ public class SceneNode {
 	private SceneNode parent;
 	private boolean inSystem = false;
 	private Engine engine;
+	
 	private ArrayList<SceneNode> children = new ArrayList<>();
-	private ArrayList<Component> components = new ArrayList<>();
 	private LinkedList<SceneNode> waitListAddChild = new LinkedList<>();
 	private LinkedList<SceneNode> waitListRemoveChild = new LinkedList<>();
+	
+	private ArrayList<Component> components = new ArrayList<>();
+	private LinkedList<Component> waitListAddComponent = new LinkedList<>();
+	private LinkedList<Component> waitListRemoveComponent = new LinkedList<>();
 	
 	private boolean updateLock = false;
 	
@@ -40,14 +44,18 @@ public class SceneNode {
 	public void update(float deltaTime) {
 		updateLock = true;
 		
+		for (Component c : components) {
+			if (c.isActive())
+				c.superUpdate(deltaTime);
+		}
 		
-		components.forEach(c -> c.superUpdate(deltaTime));
 		
 		//update transform matrix
 		transform = Mat4.translate( new Vec3(x, y, z) ).multiply( Mat4.rotate(rotationZ) ); //*scale
 		
-		children.forEach(c -> c.update(deltaTime));
-		
+		for (SceneNode child : children) {
+			child.update(deltaTime);
+		}
 		
 		updateLock = false;
 		applyWaitChildLists();
@@ -57,16 +65,20 @@ public class SceneNode {
 		//apply parent transform before this nodes transform
 		Mat4 nodeTransform = parentTransform.multiply(this.transform);
 		
-		components.forEach(c -> c.superRender(nodeTransform));
+		for (Component c : components) {
+			if (c.isActive())
+				c.superRender(nodeTransform);
+		}
 		
-		children.forEach(c -> c.render( nodeTransform ));
+		for (SceneNode child : children) {
+			child.render( nodeTransform );
+		}
 	}
 	
 	
 	public void destroy() {
 		for (SceneNode n : getChildren()) {
 			n.destroy();
-			removeChild(n);
 		}
 		for (Component c : getComponents()) {
 			removeComponent(c);
@@ -91,12 +103,21 @@ public class SceneNode {
 	}
 	
 	public void addComponent(Component c) {
+		if (updateLock) {
+			waitListAddComponent.push(c);
+			return;
+		}
 		components.add(c);
 		
 		if (inSystem) //if node has not been added to system, start when added
 			c.superStart(this);
 	}
 	public void removeComponent(Component c) {
+		if (updateLock) {
+			waitListRemoveComponent.push(c);
+			return;
+		}
+		c.superEnd();
 		components.remove(c);
 	}
 	public Component getComponent(Class<? extends Component> type) {
@@ -147,6 +168,11 @@ public class SceneNode {
 	
 	public void addY(float dy) {
 		setY(getY() + dy);
+	}
+	
+	public void setPosXY(Vec2 pos) {
+		setX(pos.x);
+		setY(pos.y);
 	}
 	
 	public void addPosXY(Vec2 pos) {
@@ -241,11 +267,20 @@ public class SceneNode {
 	private void applyWaitChildLists() {
 		if (updateLock) return;
 		
+		//add/remove children
 		while( !waitListAddChild.isEmpty() ) {
 			addChild( waitListAddChild.poll() );
 		}
 		while( !waitListRemoveChild.isEmpty() ) {
 			removeChild( waitListRemoveChild.poll() );
+		}
+		
+		//add/remove components
+		while( !waitListAddComponent.isEmpty() ) {
+			addComponent( waitListAddComponent.poll() );
+		}
+		while( !waitListRemoveComponent.isEmpty() ) {
+			removeComponent( waitListRemoveComponent.poll() );
 		}
 	}
 }

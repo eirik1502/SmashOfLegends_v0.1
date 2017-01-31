@@ -15,6 +15,16 @@ public class M {
 	public static float max(float x, float y) {
 		return Math.max(x, y);
 	}
+	public static float abs(float x) {
+		return Math.abs(x);
+	}
+	public static float clamp(float x, float min, float max) {
+		return min( max(x, min), max );
+	}
+	
+	public static float random() {
+		return (float)Math.random();
+	}
 
 	public static float cos(float angle) {
 		return (float)Math.cos((double) angle);

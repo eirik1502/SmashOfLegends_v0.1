@@ -14,6 +14,12 @@ public class PhRectangle extends PhShape{
 	public PhRectangle( float x, float y, float width, float height ) {
 		this( new Vec2(x, y), new Vec2(width, height) );
 	}
+	public PhRectangle( Vec2 size) {
+		this(new Vec2(), size);
+	}
+	public PhRectangle(float width, float height) {
+		this(new Vec2(width, height));
+	}
 
 	
 	public Vec2 getPos() {

@@ -33,7 +33,7 @@ public class PhysicsComponent extends Component{
 	
 	@Override
 	protected void start() {
-		// TODO Auto-generated method stub
+		
 		
 	}
 	@Override
@@ -51,6 +51,8 @@ public class PhysicsComponent extends Component{
 		
 		super.getOwner().addX(deltaVelocity.x);
 		super.getOwner().addY(deltaVelocity.y);
+		
+		setAcceleration(new Vec2());
 	}
 	@Override
 	protected void render(Mat4 transform) {

@@ -5,6 +5,7 @@ import main.VertexArray;
 import maths.TrigUtils;
 import physics.CollisionComponent;
 import physics.PhCircle;
+import physics.PhRectangle;
 import physics.PhysicsComponent;
 import utils.VertexArrayUtils;
 
@@ -43,14 +44,14 @@ public class LineProjectileAbility extends CharacterAbilityComponent {
 		float ownerRadius = 16;
 		
 		SceneNode b = new SceneNode();
-		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
-		b.addComponent(new MoveLineComponent(direction, bulletSpeed) );
-
 		b.setX(sx + TrigUtils.lengthdirX(ownerRadius, direction));
 		b.setY(sy + TrigUtils.lengthdirY(ownerRadius, direction));
 		
+		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
+		b.addComponent(new MoveLineComponent(direction, bulletSpeed, 2) );
+		
 		b.addComponent(new CollisionComponent(new PhCircle(bulletRadius)));
-		b.addComponent(new PhysicsComponent(40) );
+		b.addComponent(new PhysicsComponent(40, 0.99f, 0.0001f) );
 		
 		super.rootAddChild(b);
 	}

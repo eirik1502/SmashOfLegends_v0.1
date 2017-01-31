@@ -67,7 +67,7 @@ public class ShootComponent extends Component {
 		
 		SceneNode b = new SceneNode();
 		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
-		b.addComponent(new MoveLineComponent(direction, bulletSpeed) );
+		b.addComponent(new MoveLineComponent(direction, bulletSpeed, 3) );
 		b.setX(sx);
 		b.setY(sy);
 		

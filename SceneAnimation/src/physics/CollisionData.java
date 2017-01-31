@@ -18,4 +18,10 @@ public class CollisionData {
 	public CollisionData(boolean isCollision) {
 		this(isCollision, null, 0);
 	}
+	
+	
+	@Override
+	public String toString() {
+		return "[CollisionData; isCollision=" + isCollision + " normal="+normal+" penetration="+penetration+"]";
+	}
 }

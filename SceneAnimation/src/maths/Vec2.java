@@ -63,8 +63,15 @@ public class Vec2 {
 		return x == 0 && y == 0;
 	}
 	
+	@Override
+	public boolean equals(Object vec) {
+		Vec2 v = (Vec2)vec;
+		return x == v.x && y == v.y;
+	}
+	
 	
 	public String toString() {
 		return "[Vec2; x="+x+" y="+y+"]";
 	}
+
 }

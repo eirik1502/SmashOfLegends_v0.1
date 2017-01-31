@@ -13,13 +13,18 @@ public class MoveLineComponent extends Component {
 	private PhysicsComponent physicsComp;
 	
 	private Vec2 initVelocity;
+	private float time;
+	
+	private float timer = 0;
 	
 	
-	public MoveLineComponent(float direction, float speed) {
+	public MoveLineComponent(float direction, float speed, float time) {
+		
 		initVelocity = Vec2.createLendir(speed, direction);
+		this.time = time;
 	}
 	
-	@Override
+	@Override 
 	protected void start() {
 		physicsComp = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
 		
@@ -28,9 +33,10 @@ public class MoveLineComponent extends Component {
 
 	@Override
 	protected void update(float deltaTime) {
-//		SceneNode p = getOwner();
-//		p.setX(p.getX() + deltaX);
-//		p.setY(p.getY() + deltaY);
+		timer += deltaTime;
+		if (timer >= time) {
+			getOwner().destroy();
+		}
 	}
 
 	@Override

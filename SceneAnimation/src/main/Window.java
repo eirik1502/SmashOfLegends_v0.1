@@ -55,6 +55,10 @@ public class Window {
 	public static final int KEY_W = GLFW_KEY_W;
 	public static final int KEY_D = GLFW_KEY_D;
 	public static final int KEY_S = GLFW_KEY_S;
+	public static final int KEY_Q = GLFW_KEY_Q;
+	public static final int KEY_E = GLFW_KEY_E;
+	
+	public static final int KEY_ENTER = GLFW_KEY_ENTER;
 	
 	public static final int MOUSE_BUTTON_1 = GLFW_MOUSE_BUTTON_1;
 	public static final int MOUSE_BUTTON_2 = GLFW_MOUSE_BUTTON_2;
@@ -144,6 +148,9 @@ public class Window {
         glfwSwapBuffers(window);
 	}
 	
+	static public void closeWindow() {
+		glfwDestroyWindow(window);
+	}
 
 	static private void showGlfwWindow(long window) {
 		glfwShowWindow(window);

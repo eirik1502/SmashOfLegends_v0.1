@@ -21,6 +21,9 @@ public class PhysicsEngine {
 		collideables.add(c);
 		System.out.println("Number of collideable objects: " + collideables.size());
 	}
+	public void removeCollideable(CollisionComponent c) {
+		collideables.remove(c);
+	}
 	
 	public void resolve() {
 		simpleResolve();
@@ -40,7 +43,7 @@ public class PhysicsEngine {
 				CollisionData data = isCollision(c1, c2);
 				
 				if (data.isCollision) {
-					resolveCollision(c1, c2, data);
+					resolveCollision(c1, c2, data); //Should not apply impulse before all collisions are resolved.
 				}
 			}
 		}
@@ -108,15 +111,16 @@ public class PhysicsEngine {
 		if (shape1 instanceof PhCircle && shape2 instanceof PhCircle) {
 			return isCollision((PhCircle)shape1, (PhCircle)shape2);
 		}
-//		else if (shape1 instanceof PhCircle && shape2 instanceof PhRectangle) {
-//			return isCollision((PhCircle)shape1, (PhRectangle)shape2);
-//		}
-//		else if (shape1 instanceof PhRectangle && shape2 instanceof PhCircle) {
-//			return isCollision((PhCircle)shape2, (PhRectangle)shape1);
-//		}
-//		else if (shape1 instanceof PhRectangle && shape2 instanceof PhRectangle) {
-//			return isCollision((PhRectangle)shape1, (PhRectangle)shape2);
-//		}
+		else if (shape1 instanceof PhCircle && shape2 instanceof PhRectangle) {
+			CollisionData d = isCollision((PhRectangle)shape2, (PhCircle)shape1);
+			return new CollisionData(d.isCollision, d.normal.negative(), d.penetration); //flip normal here
+		}
+		else if (shape1 instanceof PhRectangle && shape2 instanceof PhCircle) {
+			return isCollision((PhRectangle)shape1, (PhCircle)shape2);
+		}
+		else if (shape1 instanceof PhRectangle && shape2 instanceof PhRectangle) {
+			return isCollision((PhRectangle)shape1, (PhRectangle)shape2);
+		}
 		throw new UnsupportedOperationException("Cannot check collision between given shapes");
 	}
 	
@@ -142,6 +146,120 @@ public class PhysicsEngine {
 		if (dist != 0) {
 			penetration = maxDist - dist;
 			normal = distVec.scale(1/dist); //optimized normalize
+		}
+		
+		return new CollisionData(true, normal, penetration);
+	}
+	public static CollisionData isCollision(PhRectangle rect1, PhRectangle rect2) {
+		Vec2 distVec = rect2.getPos().subtract(rect1.getPos());
+		
+		// Calculate half extents along x axis for each object
+		float rect1HExtentX = rect1.getWidth() / 2.0f;
+		float rect2HExtentX = rect2.getWidth() / 2.0f;
+		
+		// Calculate overlap on x axis
+		float xOverlap = rect1HExtentX + rect2HExtentX - M.abs( distVec.x );
+		
+		Vec2 normal = new Vec2();
+		float penetration = 0;
+		boolean isCollision = false;
+		// SAT test on x axis
+		if(xOverlap > 0)
+		{
+			// Calculate half extents along y axis for each object
+			float rect1HExtentY = rect1.getHeight() / 2.0f;
+			float rect2HExtentY = rect2.getHeight() / 2.0f;
+			
+			// Calculate overlap on y axis
+			float yOverlap = rect1HExtentY + rect2HExtentY - M.abs( distVec.y );
+			
+			// SAT test on y axis
+			if(yOverlap > 0)
+			{
+				isCollision = true;
+				
+				// Find out which axis is axis of least penetration
+				if(xOverlap < yOverlap) {
+					// Point towards B knowing that n points from A to B
+					if(distVec.x < 0)
+						normal = new Vec2( -1, 0 );
+					else
+						normal = new Vec2( 1, 0 );
+					
+					penetration = xOverlap;
+				}
+				else {
+					// Point toward B knowing that n points from A to B
+					if(distVec.y < 0)
+						normal = new Vec2( 0, -1 );
+					else
+						normal = new Vec2( 0, 1 );
+					
+					penetration = yOverlap;
+				}
+			}
+		}
+		
+		return new CollisionData(isCollision, normal, penetration);
+	}
+	public static CollisionData isCollision(PhRectangle rect, PhCircle circ) {
+		// Vector from A to B
+		Vec2 distVec = circ.getPos().subtract(rect.getPos());
+		
+		// Calculate half extents along each axis
+		float rectHalfExtentX = rect.getWidth() / 2;
+		float rectHalfExtentY = rect.getHeight() / 2;
+		
+		// Closest point on rect to center of circ
+		Vec2 closestRectPoint = new Vec2(	M.clamp(distVec.x, -rectHalfExtentX, rectHalfExtentX),
+											M.clamp(distVec.y, -rectHalfExtentY, rectHalfExtentY) );
+		
+		boolean circInsideRect = false;
+		
+		// Circle is inside the AABB, so we need to clamp the circle's center
+		// to the closest edge
+		if(distVec.equals(closestRectPoint)) {
+			//if the clamping above did not make closestRectPoint different from distVec, circ center inside rect
+			circInsideRect = true;
+		
+			// Find closest axis
+			//if(M.abs( distVec.x ) > M.abs( distVec.y ) ) {
+			if(M.abs( distVec.x/rect.getWidth() ) > M.abs( distVec.y/rect.getHeight() ) ) {
+				//not entirely right. If rectangles width != height it might clamp to wrong axis.
+				//  ---> fixed by dividing by width and height of rectangle
+				// Clamp to rect edge in x direction
+				if(closestRectPoint.x > 0)
+					closestRectPoint.x = rectHalfExtentX;
+				else
+					closestRectPoint.x = -rectHalfExtentX;
+			}
+			else { //clamp to rect edge in y direction
+				if(closestRectPoint.y > 0)
+					closestRectPoint.y = rectHalfExtentY;
+				else
+					closestRectPoint.y = -rectHalfExtentY;
+			}
+		}
+		
+		Vec2 rectCircVec = distVec.subtract( closestRectPoint );
+		float rectCircDistSquared = rectCircVec.getLengthSquared();
+		float circRadius = circ.getRadius();
+		
+		// Can now determine if there is a collision
+		if(rectCircDistSquared > M.pow2(circRadius) && !circInsideRect) {
+			return new CollisionData(false, new Vec2(), 0);
+		}
+		
+		// Avoided sqrt if no collision is found
+		float rectCircDist = M.sqrt(rectCircDistSquared);
+		
+		Vec2 normal = rectCircVec.scale(1/rectCircDist);
+		float penetration = circRadius - rectCircDist;
+		
+		// Flip normal if circ inside rect
+		if(circInsideRect) {
+			normal = normal.negative();
+			//penetration = rectCircDist; <--- this seems right, but works better without
 		}
 		
 		return new CollisionData(true, normal, penetration);

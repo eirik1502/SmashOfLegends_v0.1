@@ -31,7 +31,7 @@ public class Engine {
     private float mouseX;
     private float mouseY;
 
-    private boolean[] keyPressed = new boolean[256*2];
+    private boolean[] keyPressed = new boolean[562];
     private boolean[] mouseButtonPressed = new boolean[16];
 	
 	
@@ -115,7 +115,7 @@ public class Engine {
 	/**
 	 * start game loop
 	 */
-	public void start() {
+	public byte start() {
 		if (!initialized) throw new IllegalStateException("Engine is not initialized!");
 		
 		while( !Window.windowShouldClosed() ) {
@@ -126,7 +126,12 @@ public class Engine {
 			update(deltaTime);
 			render();
 			
+			if (isKeyboardPressed(Window.KEY_ENTER)) {
+				return 2;
+			}
 		}
+		Window.closeWindow();
+		return 1;
 	}
 	
 	private void update(float deltaTime) {
@@ -170,6 +175,9 @@ public class Engine {
 
 	public void addCollideable(CollisionComponent c) {
 		physicsEngine.addCollideable(c);
+	}
+	public void removeCollideable(CollisionComponent c) {
+		physicsEngine.removeCollideable(c);
 	}
 	
     public float getMouseX() {

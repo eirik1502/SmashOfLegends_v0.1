@@ -20,9 +20,17 @@ public class CollisionComponent extends Component{
 	
 	@Override
 	protected void start() {
+		SceneNode owner = getOwner();
 		physicsComponent = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
 		
 		super.getEngine().addCollideable(this);
+		
+		collisionShape.setX(owner.getX());
+		collisionShape.setY(owner.getY());
+	}
+	@Override
+	protected void end() {
+		getEngine().removeCollideable(this);
 	}
 
 	@Override

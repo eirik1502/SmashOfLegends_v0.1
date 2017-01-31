@@ -13,8 +13,11 @@ public class MoveBoomerangComponent extends Component{
 	
 	private Vec2 speed;
 	private Vec2 accel;
+	private float time;
 	
 	private SceneNode owner;
+	
+	private float timer = 0;
 	
 	
 	public MoveBoomerangComponent(float startDirection, float turnTime, float turnRadius) {
@@ -27,6 +30,8 @@ public class MoveBoomerangComponent extends Component{
 		
 		accel = new Vec2();
 		accel.setLendir(accelLen, speed.getDirection());
+		
+		this.time = turnTime*2 + 0.01f;
 		//System.out.println("Acceleration: "+ accelLen+"\nv0: " + startSpeed);
 	}
 	
@@ -38,6 +43,11 @@ public class MoveBoomerangComponent extends Component{
 	@Override
 	protected void update(float deltaTime) {
 		SceneNode p = getOwner();
+		
+		timer += deltaTime;
+		if (timer >= time) {
+			getOwner().destroy();
+		}
 		
 		speed = speed.add(accel.scale(deltaTime));
 		//Vec2 scaledSpeed = speed.scale(deltaTime);
