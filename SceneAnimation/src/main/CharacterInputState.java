@@ -59,4 +59,25 @@ public class CharacterInputState {
 		return keys[ability4];
 	}
 	
+	/**
+	 * move number i, 0-indexd
+	 * @param i
+	 * @return
+	 */
+	public boolean getMove(int i) {
+		if (i < 0 || i > 3) throw new IllegalStateException("Illegal move number");
+		int abilityIndexStart = 0;
+		return keys[abilityIndexStart+i];
+	}
+	
+	/**
+	 * abilitynumber i, 0-indexed
+	 * @param i
+	 * @return
+	 */
+	public boolean getAbility(int i) {
+		if (i < 0 || i > 3) throw new IllegalStateException("Illegal ability number");
+		int abilityIndexStart = 4;
+		return keys[abilityIndexStart+i];
+	}
 }

@@ -65,6 +65,16 @@ public class Mat4 {
 		return result;
 	}
 	
+	public static Mat4 scale(Vec3 scale) {
+		Mat4 result = identity();
+		
+		result.elements[0 + 0 * 4] = scale.x;
+		result.elements[1 + 1 * 4] = scale.y;
+		result.elements[2 + 2 * 4] = scale.z;
+		
+		return result;
+	}
+	
 	
 	
 	public Mat4 multiply(Mat4 matrix) {

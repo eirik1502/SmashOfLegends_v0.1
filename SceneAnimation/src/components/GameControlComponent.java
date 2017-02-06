@@ -1,5 +1,6 @@
 package components;
 
+
 import java.util.ArrayList;
 
 import main.CharacterAnimation;
@@ -9,8 +10,10 @@ import main.SceneNode;
 import main.VertexArray;
 import main.Window;
 import maths.M;
-import maths.Mat4;
-import physics.CollisionComponent;
+import maths.Vec2;
+import physics.CustomCollisionComponent;
+import physics.CustomCollisionResolvement;
+import physics.NaturalCollisionComponent;
 import physics.PhCircle;
 import physics.PhRectangle;
 import physics.PhysicsComponent;
@@ -20,10 +23,14 @@ public class GameControlComponent extends Component {
 
 	private Game game;
 	
-	private ArrayList<SceneNode> enemies = new ArrayList<>();
+	private float totalTimeElapsed = 0;
 	
 	
-	private float timeSinceEnemySeekSwitch = 0;
+	private float displayTimer = 0;
+	
+	private SceneNode[] players;
+	
+	private ArrayList<SceneNode> holes = new ArrayList<>();
 	
 	
 	public GameControlComponent(Game game) {
@@ -33,80 +40,125 @@ public class GameControlComponent extends Component {
 	@Override
 	protected void start() {
 		createInitialObjects();
-		this.switchEnemiesSeekComponent();
+		
+		SceneNodeListenedComponent listenedComp = new SceneNodeListenedComponent();
+		listenedComp.assignEndListener(() -> game.restart() );
+		players[0].addComponent(listenedComp);
+		//this.switchEnemiesSeekComponent();
+		
+		getRoot().addComponent(new SpawnEnemiesComponent());
+	}
+	
+	public SceneNode getPlayer(int i) {
+		return players[i];
+	}
+	public SceneNode[] getPlayers() {
+		return players;
 	}
 
 	@Override
 	protected void update(float deltaTime) {
-		float timeBetweenSwitch = 0.3f;
+		totalTimeElapsed += deltaTime;
 		
-		timeSinceEnemySeekSwitch += deltaTime;
-		if (getEngine().isKeyboardPressed(Window.KEY_E) && timeSinceEnemySeekSwitch > timeBetweenSwitch) {
-			System.out.println("Change enemy seek state");
-			switchEnemiesSeekComponent();
-			timeSinceEnemySeekSwitch = 0;
+		
+		displayTimer -= deltaTime;
+		if (displayTimer <= 0) {
+			System.out.println("Time elapsed: "+totalTimeElapsed);
+			displayTimer = 1;
 		}
-	}
-
-	@Override
-	protected void render(Mat4 transform) {
-		// TODO Auto-generated method stub
-
+		
+		if (getEngine().isKeyboardPressed(Window.KEY_ENTER)) {
+			game.restart();
+		}
 	}
 	
-	private void switchEnemiesSeekComponent() {
-		for (SceneNode e : enemies) {
-			SeekPointComponent spc = (SeekPointComponent) e.getComponent(SeekPointComponent.class);
-			if (spc.isActive()) {
-				spc.deactivate();
-			}
-			else {
-				spc.activate();
-			}
-		}
-	}
+
+	
 	
 	private void createInitialObjects() {
 		SceneNode root = getRoot();
 		float WINDOW_WIDTH = Game.WINDOW_WIDTH;
 		float WINDOW_HEIGHT = Game.WINDOW_HEIGHT;
 		
-		SceneNode p = createPlayer(root, 100, 100);
-		
-		for (int i = 0; i < 10; i++) {
-			for (int j = 0; j < 10; j++) {
-				SceneNode e = createEnemy(root , 100*i+100, 100*j + 100, 10 + M.random()*90);
-				enemies.add(e);
-			}
-		}
 		
 		createWall(root, WINDOW_WIDTH/2, 32, WINDOW_WIDTH, 64);
 		createWall(root, WINDOW_WIDTH/2, WINDOW_HEIGHT-32, WINDOW_WIDTH, 64);
 		
 		createWall(root, 32, WINDOW_HEIGHT/2, 64, WINDOW_HEIGHT-128);
 		createWall(root, WINDOW_WIDTH-32, WINDOW_HEIGHT/2, 64, WINDOW_HEIGHT-128);
+	
+		//createWall(root, WINDOW_WIDTH/2, 64+32, 400, 64);
+		//createWall(root, WINDOW_WIDTH/2, 64*2+32, 200, 64);
 		
-		createWall(root, WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 200, 200);
+		//createWall(root, WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 200, 200);
+		
+		createHole(root, WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 70);
+		
+		createHole(root, 164, 164, 100);
+		createHole(root, WINDOW_WIDTH-164, 164, 100);
+		createHole(root, 164, WINDOW_HEIGHT-164, 100);
+		createHole(root, WINDOW_WIDTH-164, WINDOW_HEIGHT-164, 100);
+
+		
+		SceneNode p1 = createPlayer(root, WINDOW_WIDTH/2 - 200, WINDOW_HEIGHT/2, false);
+		SceneNode p2 = createPlayer(root, WINDOW_WIDTH/2 + 200, WINDOW_HEIGHT/2, true);
+		SceneNode[] ps = {p1, p2};
+		players = ps;
+		
+		createBackground(root, p1);
 	}
 	
-	private SceneNode createEnemy(SceneNode root, float x, float y, float mass) {
-		float width = 16 + 32 * mass/90;
-		float height = 16 + 32 * mass/90;
-		VertexArray vaoEnemy = VertexArrayUtils.createRectangle(width, height);
+	private SceneNode createBackground(SceneNode root, SceneNode target) {
+		float r = Game.WINDOW_WIDTH/2 * 2 * 1.6f;
+		float w = Game.WINDOW_WIDTH;
+		float h = Game.WINDOW_HEIGHT;
 		
-		SceneNode nEnemy = new SceneNode();
+		float x = Game.WINDOW_WIDTH/2;
+		float y = Game.WINDOW_HEIGHT/2;
+//		float x = 0;
+//		float y = 0;
 		
-		nEnemy.addComponent(new RenderComponent(vaoEnemy, width/2, height/2));
-		nEnemy.addComponent(new SeekPointComponent(Game.WINDOW_WIDTH/2, Game.WINDOW_HEIGHT/2, 50) );
+		VertexArray bvao = VertexArrayUtils.createCircle(r, 128);
+		//VertexArray bvao = VertexArrayUtils.createRectangle(w, h);
+		
+		SceneNode b = new SceneNode();
+		b.setPosXY(new Vec2(x, y));
+		b.setZ(0.9f);
+		b.addComponent(new RenderComponent(bvao, 0, 0));
+		
+		b.addComponent(new PhysicsComponent() );
+		b.addComponent(new SeekObjectComponent(target, 6) );
+		b.addComponent(new RotationComponent(0.1f) );
+		
+		root.addChild(b);
+		
+		return b;
+	}
 	
-		nEnemy.addComponent(new CollisionComponent(new PhRectangle(width, height)));
-		nEnemy.addComponent(new PhysicsComponent(mass, 0.5f, 0.0005f) );
+	private SceneNode createHole(SceneNode root, float x, float y, float radius) {
+		float[] color = {0, 0, 0.3f};
+		VertexArray vao = VertexArrayUtils.createCircle(radius, 32, color);
 		
-		nEnemy.setX(x);
-		nEnemy.setY(y);
-		root.addChild(nEnemy);
+		SceneNode h = new SceneNode();
+		h.setPosXY(new Vec2(x, y));
+		h.setZ(0.1f);
 		
-		return nEnemy;
+		h.addComponent(new RenderComponent(vao, 0, 0));
+		
+		//add collision functionality to destroy players and enemies in the hole
+		PhCircle phShape = new PhCircle(M.max(radius-16, 1) );
+		CustomCollisionResolvement ccr = (selfCol, otherCol) -> otherCol.getOwner().destroy();
+		
+		CustomCollisionComponent ccc = new CustomCollisionComponent("hole", phShape);
+		ccc.addResolvement("player", ccr);
+		ccc.addResolvement("enemy", ccr);
+		
+		h.addComponent(new PhysicsComponent());
+		h.addComponent(ccc);
+		
+		holes.add(h);
+		root.addChild(h);
+		return h;
 	}
 	
 	//public Collideable collideEnemy
@@ -117,7 +169,7 @@ public class GameControlComponent extends Component {
 		
 		n.addComponent(new RenderComponent(vao, width/2, height/2));
 		
-		n.addComponent(new CollisionComponent(new PhRectangle(width, height)));
+		n.addComponent(new NaturalCollisionComponent(new PhRectangle(width, height)));
 		n.addComponent(new PhysicsComponent(0, 0.5f, 0.5f) );
 		//nEnemy.addComponent(new SeekPositionComponent(x, y));
 		
@@ -128,7 +180,29 @@ public class GameControlComponent extends Component {
 		return n;
 	}
 	
-	private SceneNode createPlayer(SceneNode root, float x, float y) {
+	private SceneNode createPlayer(SceneNode root, float x, float y, boolean bot) {
+		SceneNode nCharacter = new SceneNode(); //not rendered
+		nCharacter.setX(x);
+		nCharacter.setY(y);
+		
+		nCharacter.addComponent(new BoomerangProjectileAbility("wave", 1f, 0.24f*2, 0.2f, 15, 0.55f, 500) );//0.6f
+		nCharacter.addComponent(new LineProjectileAbility("dab", 0.2f, 0.15f, 0.08f, 30, 10) );
+		nCharacter.addComponent(new DashAbility("dab", 2, 0.5f, 0.2f, 30));//2000));
+		
+		if (!bot) nCharacter.addComponent(new ControllableComponent() );
+		else nCharacter.addComponent(new CharacterAiComponent(holes.toArray(new SceneNode[0])));
+		
+		nCharacter.addComponent(new CharacterComponent() );
+		
+		PhCircle phShape = new PhCircle(16);
+		nCharacter.addComponent(new NaturalCollisionComponent(phShape));
+		nCharacter.addComponent(new CustomCollisionComponent("player", phShape));
+		
+		nCharacter.addComponent(new PhysicsComponent(80, 0.5f, 0.8f).setDrawVectors(false));
+		
+		nCharacter.addComponent(new DrawVecComponent() );
+		
+		
 		VertexArray vaoHead = VertexArrayUtils.createRectangle(32, 32);
 		VertexArray vaoLupperArm = VertexArrayUtils.createRectangle(32, 16);
 		VertexArray vaoRupperArm = VertexArrayUtils.createRectangle(32, 16);
@@ -137,7 +211,6 @@ public class GameControlComponent extends Component {
 		VertexArray vaoLhandStar = VertexArrayUtils.createRectangle(8, 8);
 		VertexArray vaoRhandStar = VertexArrayUtils.createRectangle(8, 8);
 		
-		SceneNode nCharacter = new SceneNode(); //not rendered
 		SceneNode nHead = new SceneNode();
 		SceneNode nLshoulder = new SceneNode(); //not rendered
 		SceneNode nRshoulder = new SceneNode(); //not rendered
@@ -230,20 +303,9 @@ public class GameControlComponent extends Component {
 		animComp.addAnimation("wave", new CharacterAnimation(waveAnimData));
 		animComp.addAnimation("dab", new CharacterAnimation(dabAnimData));
 		nCharacter.addComponent(animComp );
-
-		nCharacter.addComponent(new BoomerangProjectileAbility("wave", 1f, 0.24f, 0.1f, 15, 0.6f, 500) );
-		nCharacter.addComponent(new LineProjectileAbility("dab", 0.2f, 0.1f, 0.08f, 800, 10) );
-		
-		nCharacter.addComponent(new CharacterComponent() );
-		nCharacter.addComponent(new PhysicsComponent(80, 0.2f) );
-		nCharacter.addComponent(new CollisionComponent(new PhCircle(16)));
-		nCharacter.addComponent(new ControllableComponent() ); //input delayed 1 frame
-		
-		nCharacter.setX(x);
-		nCharacter.setY(y);
 		
 		//ordering
-		root.addChild(nCharacter);
+		
 		nCharacter.addChild(nHead);
 		nCharacter.addChild(nLshoulder);
 		nCharacter.addChild(nRshoulder);
@@ -258,8 +320,9 @@ public class GameControlComponent extends Component {
 		nLhand.addChild(nLhandStar);
 		nRhand.addChild(nRhandStar);
 		
+		root.addChild(nCharacter);
+		
 		return nCharacter;
 	}
-
 
 }

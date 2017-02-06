@@ -14,13 +14,13 @@ import physics.PhysicsComponent;
 public class CharacterComponent extends Component{
 
 	
-	private CharacterAbilityComponent ability1, ability2;	
+	private CharacterAbilityComponent[] abilities;	
 	private CharacterAnimationComponent animationComp;
 	private PhysicsComponent physicsComp;
 
 	private CharacterInputState inputState = new CharacterInputState();
 	
-	private float moveAccel = 1000;
+	private float moveAccel = 30;//15;
 	
 	
 	public static final byte IDLE_STATE = 0, MOVE_STATE = 1, ABILITY_STATE = 2;
@@ -36,10 +36,13 @@ public class CharacterComponent extends Component{
 		animationComp = (CharacterAnimationComponent) super.getOwner().getComponent(CharacterAnimationComponent.class);
 		physicsComp = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
 		
-		ability1 = (BoomerangProjectileAbility) super.getOwner().getComponent(BoomerangProjectileAbility.class);
-		ability2 = (LineProjectileAbility) super.getOwner().getComponent(LineProjectileAbility.class);
+		abilities = new CharacterAbilityComponent[3];
+		abilities[0] = (BoomerangProjectileAbility) super.getOwner().getComponent(BoomerangProjectileAbility.class);
+		abilities[1] = (LineProjectileAbility) super.getOwner().getComponent(LineProjectileAbility.class);
+		abilities[2] = (DashAbility) super.getOwner().getComponent(DashAbility.class);
 		
-		physicsComp.setFrictionConst(0.1f);
+		physicsComp.setFrictionConst(3f);
+		physicsComp.setFrictionModel(PhysicsComponent.FRICTION_MODEL_VICIOUS);
 	}
 	@Override
 	protected void update(float deltaTime) {
@@ -62,14 +65,9 @@ public class CharacterComponent extends Component{
 		currAccel.y = (inputState.getMoveDown() ? 1f : 0f)
 				- (inputState.getMoveUp() ? 1f : 0f);
 		
-		currAccel = currAccel.scale( moveAccel );
-		
-		
-		
-		physicsComp.setAcceleration(currAccel);
-		
 		if (!currAccel.isNull()) {
-			//physicsComp.setVelocity(currVelocity);
+			currAccel = currAccel.normalize().scale( moveAccel );
+			physicsComp.addAcceleration(currAccel );
 		}
 		else if (inState(MOVE_STATE)) {
 			setState(IDLE_STATE);
@@ -85,22 +83,20 @@ public class CharacterComponent extends Component{
 	private void updateAbilities(SceneNode p, Engine e) {
 		if (inState(ABILITY_STATE)) return;
 		
-		if (inputState.getAbility1()) {
-			if (ability1.triggerAbility()) {
-				if (ability1.hasAnimation())
-					animationComp.startAnimation(ability1.getAnimationName());
-				
-				setState(ABILITY_STATE);
+		
+		for (int i = 0; i < abilities.length; i++) {
+			if (inputState.getAbility(i)) {
+				if (abilities[i].triggerAbility()) {
+					
+					if (abilities[i].hasAnimation())
+						animationComp.startAnimation(abilities[i].getAnimationName());
+					
+					setState(ABILITY_STATE);
+					break;
+				}
 			}
 		}
-		else if (inputState.getAbility2()) {
-			if (ability2.triggerAbility()) {
-				if (ability2.hasAnimation())
-					animationComp.startAnimation(ability2.getAnimationName());
-				
-				setState(ABILITY_STATE);
-			}
-		}
+		
 	}
 
 	public void onAbilityEnd(CharacterAbilityComponent ability) {
@@ -108,11 +104,6 @@ public class CharacterComponent extends Component{
 	}
 	
 	
-	@Override
-	protected void render(Mat4 transform) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	private void setState(byte state) {
 		currentState = state;

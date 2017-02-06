@@ -15,7 +15,7 @@ import components.SeekPointComponent;
 import components.ShootComponent;
 import maths.M;
 import maths.Mat4;
-import physics.CollisionComponent;
+import physics.NaturalCollisionComponent;
 import physics.PhCircle;
 import physics.PhRectangle;
 import physics.PhysicsComponent;
@@ -33,10 +33,9 @@ public class Game {
 	
 	private Engine engine;
 	
-	
 	private SceneNode root;
 	
-	private SceneNode square;
+	private boolean restarting = false;
 	
 	
 	public static void main(String[] args) {
@@ -68,8 +67,21 @@ public class Game {
 	}
 	
 	public int start() {
-		float FPS = 60;
-		
-		return engine.start();
+
+		int code =  engine.start();
+		if (restarting) {
+			restarting = false;
+			return 2;
+		}
+		return code;
+	}
+	
+	public void restart() {
+		restarting = true;
+		engine.stop();
+	}
+	
+	public void stop() {
+		engine.stop();
 	}
 }

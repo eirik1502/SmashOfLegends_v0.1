@@ -28,10 +28,12 @@ public class ControllableComponent extends Component {
 				e.isKeyboardPressed(Window.KEY_D),
 				e.isKeyboardPressed(Window.KEY_W),
 				e.isKeyboardPressed(Window.KEY_S),
+				//e.isKeyboardPressed(Window.KEY_D),
 				e.isMousePressed(Window.MOUSE_BUTTON_1),
 				e.isMousePressed(Window.MOUSE_BUTTON_2),
-				false,
-				false);
+				e.isKeyboardPressed(Window.KEY_E),
+				e.isKeyboardPressed(Window.KEY_Q)
+				);
 		characterComponent.setInputState(newInputState);
 	}
 

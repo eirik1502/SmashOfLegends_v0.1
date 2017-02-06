@@ -14,15 +14,25 @@ public class Vec2 {
 		this.y = y;
 	}
 	
-	public static Vec2 createLendir(float length, float dir) {
+	public static Vec2 newLenDir(float length, float dir) {
 		Vec2 v = new Vec2();
-		v.setLendir(length, dir);
+		v.setLenDir(length, dir);
 		return v;
 	}
+	public static Vec2 newMaxValue() {
+		return new Vec2(Float.MAX_VALUE, Float.MAX_VALUE);
+	}
 	
-	public void setLendir(float length, float direction) {
+	
+	public void setLenDir(float length, float direction) {
 		x = M.cos(direction)*length;
 		y = M.sin(direction)*length;
+	}
+	public void setLength(float length) {
+		setLenDir(length, getDirection());
+	}
+	public void setDirection(float dir) {
+		setLenDir(getLength(), dir);
 	}
 	
 
@@ -46,6 +56,7 @@ public class Vec2 {
 	
 	public Vec2 normalize() {
 		float len = getLength();
+		if(len == 0) return new Vec2();
 		return new Vec2(x/len, y/len);
 	}
 	
@@ -61,6 +72,14 @@ public class Vec2 {
 	
 	public boolean isNull() {
 		return x == 0 && y == 0;
+	}
+	
+	public void setAs(Vec2 v) {
+		x = v.x;
+		y = v.y;
+	}
+	public void setZero() {
+		x = y = 0;
 	}
 	
 	@Override

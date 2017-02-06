@@ -19,17 +19,17 @@ public abstract class Component {
 	}
 	public void superUpdate(float deltaTime) {
 		update(deltaTime);
+		
+		getEngine().incrementUpdatedComponents();
 	}
 	public void superRender(Mat4 transform) {
 		render(transform);
 	}
 	
-	public void deactivate() {
-		isActive = false;
+	public void setActive(boolean value) {
+		isActive = value;
 	}
-	public void activate() {
-		isActive = true;
-	}
+	
 	public boolean isActive() {
 		return isActive;
 	}
@@ -52,6 +52,6 @@ public abstract class Component {
 	
 	protected abstract void start();
 	protected void end() {}; //just because I dont want to add it to all components right now
-	protected abstract void update(float deltaTime);
-	protected abstract void render(Mat4 transform);
+	protected void update(float deltaTime){};
+	protected void render(Mat4 transform){};
 }

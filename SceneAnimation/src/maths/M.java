@@ -21,6 +21,27 @@ public class M {
 	public static float clamp(float x, float min, float max) {
 		return min( max(x, min), max );
 	}
+	public static float sign(float x) {
+		return Math.signum(x);
+	}
+	public static float round(float x) {
+		return Math.round(x);
+	}
+	public static int roundi(float x) {
+		return Math.round(x);
+	}
+	public static float floor(float x) {
+		return (float)Math.floor(x);
+	}
+	public static float ceil(float x) {
+		return (float)Math.ceil(x);
+	}
+	public static int floori(float x) {
+		return (int)floor(x);
+	}
+	public static int ceili(float x) {
+		return (int)ceil(x);
+	}
 	
 	public static float random() {
 		return (float)Math.random();

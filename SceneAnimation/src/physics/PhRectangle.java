@@ -20,6 +20,12 @@ public class PhRectangle extends PhShape{
 	public PhRectangle(float width, float height) {
 		this(new Vec2(width, height));
 	}
+	
+	
+	@Override
+	public PhShapes getShape() {
+		return PhShapes.RECT;
+	}
 
 	
 	public Vec2 getPos() {

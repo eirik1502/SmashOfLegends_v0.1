@@ -4,9 +4,11 @@ import java.util.ArrayList;
 
 import org.lwjgl.opengl.GL11;
 
+import maths.M;
 import maths.Mat4;
 import physics.Collideable;
-import physics.CollisionComponent;
+import physics.CustomCollisionComponent;
+import physics.NaturalCollisionComponent;
 import physics.PhysicsEngine;
 import utils.VertexArrayUtils;
 
@@ -24,9 +26,11 @@ public class Engine {
 	private PhysicsEngine physicsEngine;
 	
 	private boolean initialized = false;
+	private boolean running = true;
 	
+	private long lastTime;
 	
-	private long lastTime = System.nanoTime();
+	private boolean updateLock = false;
 	
     private float mouseX;
     private float mouseY;
@@ -35,6 +39,13 @@ public class Engine {
     private boolean[] mouseButtonPressed = new boolean[16];
 	
 	
+    private int objectsUpdated = 0;
+    private int componentsUpdated = 0;
+    private float updatePrintTimer = 1;
+    
+    
+    private float fpsTimer = 0;
+    
 	
 	
 	public void setWindowSize(float width, float height) {
@@ -118,29 +129,55 @@ public class Engine {
 	public byte start() {
 		if (!initialized) throw new IllegalStateException("Engine is not initialized!");
 		
-		while( !Window.windowShouldClosed() ) {
+		float updateRate = 1f/60f;
+		float timeToUpdate = 0;
+		getDeltaTime(); //set reference for deltaTime
+		
+		while( running ) {
 			
 			float deltaTime = getDeltaTime();
-			
-			//System.out.println("delta time: " + deltaTime);
-			update(deltaTime);
-			render();
-			
-			if (isKeyboardPressed(Window.KEY_ENTER)) {
-				return 2;
+			timeToUpdate -= deltaTime;
+			if (timeToUpdate <= 0) {
+				timeToUpdate += updateRate;
+				
+				System.out.println("delta time: " + deltaTime + " fps: "+updateRate);
+				update(updateRate);
+				afterUpdate();
+				render();
+				
+				if (Window.windowShouldClosed()) {
+					running = false;
+				}
 			}
+
 		}
 		Window.closeWindow();
 		return 1;
 	}
 	
+	public void stop() {
+		running = false;
+	}
+	
 	private void update(float deltaTime) {
-		
 		Window.pollIoEvents();
 		
+		setUpdateLock(true);
 		root.update(deltaTime);
 		
-		physicsEngine.resolve();
+		physicsEngine.resolveAll();
+		setUpdateLock(false);
+		
+		updatePrintTimer -= deltaTime;
+		if (updatePrintTimer <= 0) {
+			updatePrintTimer = 1;
+			
+			System.out.println("Objects updated: " + objectsUpdated+" Components updated: "+componentsUpdated);
+		}
+		objectsUpdated = componentsUpdated = 0;
+	}
+	private void afterUpdate() {
+		root.afterUpdate();
 	}
 	private void render() {
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -148,6 +185,20 @@ public class Engine {
 		root.render(Mat4.identity());
 		
 		Window.swapBuffers();
+	}
+
+	
+	public void incrementUpdatedObjects() {
+		this.objectsUpdated++;
+	}
+	public void incrementUpdatedComponents() {
+		this.componentsUpdated++;
+	}
+	public boolean isUpdateLock() {
+		return updateLock;
+	}
+	private void setUpdateLock(boolean value) {
+		this.updateLock = value;
 	}
 
 	private float getDeltaTime() {
@@ -173,11 +224,17 @@ public class Engine {
 	}
 	
 
-	public void addCollideable(CollisionComponent c) {
+	public void addNaturalCollideable(NaturalCollisionComponent c) {
 		physicsEngine.addCollideable(c);
 	}
-	public void removeCollideable(CollisionComponent c) {
+	public void removeNaturalCollideable(NaturalCollisionComponent c) {
 		physicsEngine.removeCollideable(c);
+	}
+	public void addCustomCollideable(CustomCollisionComponent c) {
+		physicsEngine.addCustomCollideable(c);
+	}
+	public void removeCustomCollideable(CustomCollisionComponent c) {
+		physicsEngine.removeCustomCollideable(c);
 	}
 	
     public float getMouseX() {

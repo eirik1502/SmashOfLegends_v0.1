@@ -4,24 +4,29 @@ import maths.Vec2;
 
 public class CollisionData {
 
-	public final Vec2 normal;
-	public final float penetration;
+	//public enum CollisionType {CIRC_CIRC, RECT_RECT, RECT_CIRC, CIRC_RECT};
 	
-	public final boolean isCollision;
+	public CollisionComponent c1, c2;
+	
+	public Vec2 normal;
+	public float penetration;
 	
 	
-	public CollisionData(boolean isCollision, Vec2 normal, float penetration) {
-		this.isCollision = isCollision;
-		this.normal = normal;
-		this.penetration = penetration;
+	public CollisionData(CollisionComponent c1, CollisionComponent c2) {
+		this.c1 = c1;
+		this.c2 = c2;
 	}
-	public CollisionData(boolean isCollision) {
-		this(isCollision, null, 0);
-	}
+	
+//	public void setNormal(Vec2 normal) {
+//		this.normal = normal;
+//	}
+//	public void setPenetration(float penetration) {
+//		this.penetration = penetration;
+//	}
 	
 	
 	@Override
 	public String toString() {
-		return "[CollisionData; isCollision=" + isCollision + " normal="+normal+" penetration="+penetration+"]";
+		return "[CollisionData; normal="+normal+" penetration="+penetration+"]";
 	}
 }

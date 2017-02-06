@@ -57,6 +57,7 @@ public class Window {
 	public static final int KEY_S = GLFW_KEY_S;
 	public static final int KEY_Q = GLFW_KEY_Q;
 	public static final int KEY_E = GLFW_KEY_E;
+	public static final int KEY_F = GLFW_KEY_F;
 	
 	public static final int KEY_ENTER = GLFW_KEY_ENTER;
 	

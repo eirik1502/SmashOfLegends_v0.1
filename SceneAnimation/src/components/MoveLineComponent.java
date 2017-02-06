@@ -20,7 +20,7 @@ public class MoveLineComponent extends Component {
 	
 	public MoveLineComponent(float direction, float speed, float time) {
 		
-		initVelocity = Vec2.createLendir(speed, direction);
+		initVelocity = Vec2.newLenDir(speed, direction);
 		this.time = time;
 	}
 	
@@ -28,7 +28,7 @@ public class MoveLineComponent extends Component {
 	protected void start() {
 		physicsComp = (PhysicsComponent) super.getOwner().getComponent(PhysicsComponent.class);
 		
-		physicsComp.addVelocity(initVelocity);
+		physicsComp.addImpulse(initVelocity);
 	}
 
 	@Override

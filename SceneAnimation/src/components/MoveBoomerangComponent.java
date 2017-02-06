@@ -11,52 +11,40 @@ public class MoveBoomerangComponent extends Component{
 
 	private PhysicsComponent physicsComponent;
 	
-	private Vec2 speed;
+	private Vec2 startSpeed;
 	private Vec2 accel;
 	private float time;
-	
-	private SceneNode owner;
 	
 	private float timer = 0;
 	
 	
 	public MoveBoomerangComponent(float startDirection, float turnTime, float turnRadius) {
 		
-		float startSpeed = 2*turnRadius / turnTime;
-		float accelLen = - 2*turnRadius/(turnTime*turnTime);
+		float startSpeedLen = (2*turnRadius / turnTime) /PhysicsComponent.METER;
+		float accelLen = - 2*turnRadius/(turnTime*turnTime) /PhysicsComponent.METER;
 		
-		speed = new Vec2();
-		speed.setLendir(startSpeed, startDirection);
+		startSpeed = Vec2.newLenDir(startSpeedLen, startDirection);
+		accel = Vec2.newLenDir(accelLen, startSpeed.getDirection());
 		
-		accel = new Vec2();
-		accel.setLendir(accelLen, speed.getDirection());
-		
-		this.time = turnTime*2 + 0.01f;
-		//System.out.println("Acceleration: "+ accelLen+"\nv0: " + startSpeed);
+		time = turnTime*2 - 0.01f;
+		timer = time;
 	}
 	
 	@Override
 	protected void start() {
 		physicsComponent = (PhysicsComponent) getOwner().getComponent(PhysicsComponent.class);
+		
+		physicsComponent.addImpulse(startSpeed);
 	}
 
 	@Override
 	protected void update(float deltaTime) {
-		SceneNode p = getOwner();
-		
-		timer += deltaTime;
-		if (timer >= time) {
+		timer -= deltaTime;
+		if (timer <= 0) {
 			getOwner().destroy();
 		}
 		
-		speed = speed.add(accel.scale(deltaTime));
-		//Vec2 scaledSpeed = speed.scale(deltaTime);
-		
-		physicsComponent.setVelocity(speed);
-	}
-
-	@Override
-	protected void render(Mat4 transform) {
+		physicsComponent.addAcceleration(accel);
 	}
 
 }

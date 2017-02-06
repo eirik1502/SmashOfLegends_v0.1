@@ -18,6 +18,12 @@ public class PhCircle extends PhShape{
 	public PhCircle(float radius) {
 		this(new Vec2(), radius);
 	}
+	
+	@Override
+	public PhShapes getShape() {
+		return PhShapes.CIRC;
+	}
+	
 
 	public Vec2 getPos() {
 		return pos;

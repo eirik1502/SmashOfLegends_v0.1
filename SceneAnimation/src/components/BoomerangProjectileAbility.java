@@ -4,7 +4,7 @@ import main.SceneNode;
 import main.VertexArray;
 import maths.TrigUtils;
 import maths.Vec2;
-import physics.CollisionComponent;
+import physics.NaturalCollisionComponent;
 import physics.PhCircle;
 import physics.PhRectangle;
 import physics.PhysicsComponent;
@@ -50,12 +50,14 @@ public class BoomerangProjectileAbility extends CharacterAbilityComponent {
 		
 		b.addComponent(new MoveBoomerangComponent(direction, bulletTurnTime, bulletTurnRadius));
 		
-		Vec2 startPos = new Vec2(sx, sy).add(Vec2.createLendir(16, direction));
+		Vec2 startPos = new Vec2(sx, sy).add(Vec2.newLenDir(16, direction));
 		b.setPosXY(startPos);
 		
 		
-		b.addComponent(new CollisionComponent(new PhCircle(bulletRadius)));
-		b.addComponent(new PhysicsComponent(60) );
+		b.addComponent(new NaturalCollisionComponent(new PhCircle(bulletRadius)));
+		b.addComponent(new PhysicsComponent(60*3).setDrawVectors(true) );
+		
+		b.addComponent(new DrawVecComponent() );
 		
 		super.rootAddChild(b);
 	}

@@ -10,57 +10,78 @@ import maths.Vec2;
 public class PhysicsEngine {
 
 	
-    private ArrayList<CollisionComponent> collideables = new ArrayList<>();
+    private ArrayList<NaturalCollisionComponent> collideables = new ArrayList<>();
+    private ArrayList<CustomCollisionComponent> customCollideables = new ArrayList<>();
     
     
     /**
      * Object has to have a PhysicsComponent
      * @param c
      */
-	public void addCollideable(CollisionComponent c) {
+	public void addCollideable(NaturalCollisionComponent c) {
 		collideables.add(c);
-		System.out.println("Number of collideable objects: " + collideables.size());
+		//System.out.println("Number of collideable objects: " + collideables.size());
 	}
-	public void removeCollideable(CollisionComponent c) {
+	public void removeCollideable(NaturalCollisionComponent c) {
 		collideables.remove(c);
 	}
 	
-	public void resolve() {
-		simpleResolve();
+	public void addCustomCollideable(CustomCollisionComponent c) {
+		customCollideables.add(c);
+		//System.out.println("Number of collideable objects: " + collideables.size());
+	}
+	public void removeCustomCollideable(CustomCollisionComponent c) {
+		customCollideables.remove(c);
 	}
 	
 	/**
 	 * resolve collision objects by moving them appart
 	 */
-	private void simpleResolve() {
-		for (int i = 0; i < collideables.size(); i++) {
-			for (int j = i; j < collideables.size(); j++) {
-				CollisionComponent c1 = collideables.get(i);
-				CollisionComponent c2 = collideables.get(j);
+	public void resolveAll() {
+		resolveAllNatural();
+		resolveAllCustom();
+	}
+	
+	private void resolveAllCustom() {
+		for (int i = 0; i < customCollideables.size(); i++) {
+			for (int j = i; j < customCollideables.size(); j++) {
+				CustomCollisionComponent c1 = customCollideables.get(i);
+				CustomCollisionComponent c2 = customCollideables.get(j);
 				
 				if (c1 == c2) continue; //do not resolve collisions between the same object
 				
-				CollisionData data = isCollision(c1, c2);
-				
-				if (data.isCollision) {
-					resolveCollision(c1, c2, data); //Should not apply impulse before all collisions are resolved.
+				CollisionData data = new CollisionData(c1, c2);
+				if ( isCollision(data) ) {
+					c1.resolve(c2);
+					c2.resolve(c1);
 				}
 			}
 		}
 	}
 	
-//	public SceneNode collide(Class<?> type) {
-//		for (Collideable c : collideables) {
-//			if (type.isInstance(c)) {
-//				return (SceneNode) c;
-//			}
-//		}
-//		return null;
-//	}
+	private void resolveAllNatural() {
+		for (int i = 0; i < collideables.size(); i++) {
+			for (int j = i; j < collideables.size(); j++) {
+				NaturalCollisionComponent c1 = collideables.get(i);
+				NaturalCollisionComponent c2 = collideables.get(j);
+				
+				if (c1 == c2) continue; //do not resolve collisions between the same object
+				
+				CollisionData data = new CollisionData(c1, c2);
+				if ( isCollision(data) ) {
+					resolveNaturalCollision(data); //Should not apply impulse before all collisions are resolved.
+				}
+			}
+		}
+	}
 	
-	public static void resolveCollision(CollisionComponent c1, CollisionComponent c2, CollisionData data) {
-		PhysicsComponent p1 = c1.getPhysicsComponent();
-		PhysicsComponent p2 = c2.getPhysicsComponent();
+	/**
+	 * data input must contain normal and penetration data
+	 * @param data
+	 */
+	private void resolveNaturalCollision(CollisionData data) {
+		PhysicsComponent p1 = data.c1.getPhysicsComponent();
+		PhysicsComponent p2 = data.c2.getPhysicsComponent();
 		float invM1 = p1.getInvMass();
 		float invM2 = p2.getInvMass();
 		
@@ -78,53 +99,63 @@ public class PhysicsEngine {
 		
 		// Apply impulse
 		Vec2 impulse = data.normal.scale(impulseLength);
-		p1.addVelocity( impulse.scale( invM1 ).negative() );
-		p2.addVelocity( impulse.scale( invM2 ) );
+//		p1.addVelocity( impulse.scale( invM1 ).negative() );
+//		p2.addVelocity( impulse.scale( invM2 ) );
+		p1.addImpulse( impulse.scale( invM1 ).negative() );
+		p2.addImpulse( impulse.scale( invM2 ) );
 		
-		positionalCorrection(p1, p2, data);
+		positionalCorrection(data);
 	}
-	
+
 	/**
 	 * Corrects for floating point error to eliminate sinking of objects
 	 * @param p1
 	 * @param p2
 	 * @param data
 	 */
-	private static void positionalCorrection(PhysicsComponent p1, PhysicsComponent p2, CollisionData data)
+	private void positionalCorrection(CollisionData data)
 	{
+		PhysicsComponent p1 = data.c1.getPhysicsComponent();
+		PhysicsComponent p2 = data.c2.getPhysicsComponent();
+		
 		SceneNode o1 = p1.getOwner();
 		SceneNode o2 = p2.getOwner();
 		
 		float percent = 0.2f; // usually 20% to 80%
 		float slop = 0.01f; // usually 0.01 to 0.1
+		
 		Vec2 correction = data.normal.scale(percent * (M.max(data.penetration - slop, 0.0f) / (p1.getInvMass() + p2.getInvMass()) ) );
 		o1.addPosXY( correction.scale(p1.getInvMass()).negative() );
 		o2.addPosXY( correction.scale(p2.getInvMass()) );
+//		p1.addTemporaryVelocity( correction.scale(p1.getInvMass()).negative() );
+//		p2.addTemporaryVelocity( correction.scale(p2.getInvMass()) );
 	}
-	
 
-	public static CollisionData isCollision(CollisionComponent c1, CollisionComponent c2) {
-		return isCollision(c1.getPhShape(), c2.getPhShape());
-	}
 	
-	public static CollisionData isCollision(PhShape shape1, PhShape shape2) {
+	private boolean isCollision(CollisionData data) {
+		
+		PhShape shape1 = data.c1.getPhShape();
+		PhShape shape2 = data.c2.getPhShape();
+		
 		if (shape1 instanceof PhCircle && shape2 instanceof PhCircle) {
-			return isCollision((PhCircle)shape1, (PhCircle)shape2);
+			return isCollisionCircCirc(data);
 		}
 		else if (shape1 instanceof PhCircle && shape2 instanceof PhRectangle) {
-			CollisionData d = isCollision((PhRectangle)shape2, (PhCircle)shape1);
-			return new CollisionData(d.isCollision, d.normal.negative(), d.penetration); //flip normal here
+			return isCollisionCircRect(data);
 		}
 		else if (shape1 instanceof PhRectangle && shape2 instanceof PhCircle) {
-			return isCollision((PhRectangle)shape1, (PhCircle)shape2);
+			return isCollisionRectCirc(data);
 		}
 		else if (shape1 instanceof PhRectangle && shape2 instanceof PhRectangle) {
-			return isCollision((PhRectangle)shape1, (PhRectangle)shape2);
+			return isCollisionRectRect(data);
 		}
 		throw new UnsupportedOperationException("Cannot check collision between given shapes");
 	}
 	
-	public static CollisionData isCollision(PhCircle circ1, PhCircle circ2) {
+	private boolean isCollisionCircCirc(CollisionData data) {
+		PhCircle circ1 = (PhCircle)data.c1.getPhShape();
+		PhCircle circ2 = (PhCircle)data.c2.getPhShape();
+		
 		Vec2 pos1 = circ1.getPos();
 		Vec2 pos2 = circ2.getPos();
 		float r1 = circ1.getRadius();
@@ -135,22 +166,27 @@ public class PhysicsEngine {
 		
 		Vec2 distVec = pos2.subtract(pos1);
 		
-		if (distVec.getLengthSquared() >= maxDistSquared) return new CollisionData(false);
+		if (distVec.getLengthSquared() >= maxDistSquared) {
+			return false;
+		}
 		
 		float dist = distVec.getLength();
 		
-		//set default values if circles on same pos
-		float penetration = r1;
-		Vec2 normal = new Vec2(1, 0);
-		
 		if (dist != 0) {
-			penetration = maxDist - dist;
-			normal = distVec.scale(1/dist); //optimized normalize
+			data.penetration = maxDist - dist;
+			data.normal = distVec.scale(1/dist); //optimized normalize
+			return true;
 		}
 		
-		return new CollisionData(true, normal, penetration);
+		//set default values if circles on same pos
+		data.penetration = r1;
+		data.normal = new Vec2(1, 0);
+		return true;
 	}
-	public static CollisionData isCollision(PhRectangle rect1, PhRectangle rect2) {
+	private boolean isCollisionRectRect(CollisionData data) {
+		PhRectangle rect1 = (PhRectangle)data.c1.getPhShape();
+		PhRectangle rect2 = (PhRectangle)data.c2.getPhShape();
+		
 		Vec2 distVec = rect2.getPos().subtract(rect1.getPos());
 		
 		// Calculate half extents along x axis for each object
@@ -160,9 +196,6 @@ public class PhysicsEngine {
 		// Calculate overlap on x axis
 		float xOverlap = rect1HExtentX + rect2HExtentX - M.abs( distVec.x );
 		
-		Vec2 normal = new Vec2();
-		float penetration = 0;
-		boolean isCollision = false;
 		// SAT test on x axis
 		if(xOverlap > 0)
 		{
@@ -176,33 +209,42 @@ public class PhysicsEngine {
 			// SAT test on y axis
 			if(yOverlap > 0)
 			{
-				isCollision = true;
-				
 				// Find out which axis is axis of least penetration
 				if(xOverlap < yOverlap) {
 					// Point towards B knowing that n points from A to B
 					if(distVec.x < 0)
-						normal = new Vec2( -1, 0 );
+						data.normal = new Vec2( -1, 0 );
 					else
-						normal = new Vec2( 1, 0 );
+						data.normal =  new Vec2( 1, 0 );
 					
-					penetration = xOverlap;
+					data.penetration = xOverlap;
+					return true;
 				}
 				else {
 					// Point toward B knowing that n points from A to B
 					if(distVec.y < 0)
-						normal = new Vec2( 0, -1 );
+						data.normal = new Vec2( 0, -1 );
 					else
-						normal = new Vec2( 0, 1 );
+						data.normal = new Vec2( 0, 1 );
 					
-					penetration = yOverlap;
+					data.penetration = yOverlap;
+					return true;
 				}
 			}
 		}
 		
-		return new CollisionData(isCollision, normal, penetration);
+		return false;
 	}
-	public static CollisionData isCollision(PhRectangle rect, PhCircle circ) {
+	private boolean isCollisionCircRect(CollisionData data) {
+		CollisionComponent oc1 = data.c1;
+		data.c1 = data.c2;
+		data.c2 = oc1;
+		return isCollisionRectCirc(data);
+	}
+	private boolean isCollisionRectCirc(CollisionData data) {
+		PhRectangle rect = (PhRectangle)data.c1.getPhShape();
+		PhCircle circ = (PhCircle)data.c2.getPhShape();
+		
 		// Vector from A to B
 		Vec2 distVec = circ.getPos().subtract(rect.getPos());
 		
@@ -247,11 +289,16 @@ public class PhysicsEngine {
 		
 		// Can now determine if there is a collision
 		if(rectCircDistSquared > M.pow2(circRadius) && !circInsideRect) {
-			return new CollisionData(false, new Vec2(), 0);
+			return false;
 		}
 		
 		// Avoided sqrt if no collision is found
 		float rectCircDist = M.sqrt(rectCircDistSquared);
+		
+		
+		if (rectCircDist == 0) {
+			return false;
+		}
 		
 		Vec2 normal = rectCircVec.scale(1/rectCircDist);
 		float penetration = circRadius - rectCircDist;
@@ -261,9 +308,13 @@ public class PhysicsEngine {
 			normal = normal.negative();
 			//penetration = rectCircDist; <--- this seems right, but works better without
 		}
-		
-		return new CollisionData(true, normal, penetration);
+	
+		data.normal = normal;
+		data.penetration = penetration;
+		return true;
 	}
+	
+	
 	
 	public static boolean isCollisionSimple(PhCircle circ1, PhCircle circ2) {
 		float x1 = circ1.getX();

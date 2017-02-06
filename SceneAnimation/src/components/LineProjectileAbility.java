@@ -3,7 +3,7 @@ package components;
 import main.SceneNode;
 import main.VertexArray;
 import maths.TrigUtils;
-import physics.CollisionComponent;
+import physics.NaturalCollisionComponent;
 import physics.PhCircle;
 import physics.PhRectangle;
 import physics.PhysicsComponent;
@@ -25,7 +25,6 @@ public class LineProjectileAbility extends CharacterAbilityComponent {
 
 	@Override
 	protected boolean onTrigger() {
-		System.out.println("Ability triggered");
 		return true;
 	}
 	
@@ -36,7 +35,8 @@ public class LineProjectileAbility extends CharacterAbilityComponent {
 	}
 
 	private void createProjectile() {
-		VertexArray vao = VertexArrayUtils.createRectangle(bulletRadius*2, bulletRadius*2);
+		//VertexArray vao = VertexArrayUtils.createRectangle(bulletRadius*2, bulletRadius*2);
+		VertexArray vao = VertexArrayUtils.createCircle(bulletRadius, 8);
 		float direction = getOwner().getGlobalRotationZ();
 		float sx = getOwner().getGlobalX();
 		float sy = getOwner().getGlobalY();
@@ -47,11 +47,13 @@ public class LineProjectileAbility extends CharacterAbilityComponent {
 		b.setX(sx + TrigUtils.lengthdirX(ownerRadius, direction));
 		b.setY(sy + TrigUtils.lengthdirY(ownerRadius, direction));
 		
-		b.addComponent(new RenderComponent(vao, bulletRadius, bulletRadius));
+		b.addComponent(new RenderComponent(vao));
 		b.addComponent(new MoveLineComponent(direction, bulletSpeed, 2) );
 		
-		b.addComponent(new CollisionComponent(new PhCircle(bulletRadius)));
-		b.addComponent(new PhysicsComponent(40, 0.99f, 0.0001f) );
+		b.addComponent(new NaturalCollisionComponent(new PhCircle(bulletRadius)));
+		b.addComponent(new PhysicsComponent(40, 0.99f, 0.0001f).setDrawVectors(true) );
+		
+		b.addComponent(new DrawVecComponent() );
 		
 		super.rootAddChild(b);
 	}

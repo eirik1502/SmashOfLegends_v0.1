@@ -65,13 +65,11 @@ public abstract class CharacterAbilityComponent extends Component{
 	}
 	private void triggerEffect() {
 		onEffect();
-		currentState = ENDLAG_STATE;
 	}
 	private void endAbility() {
 		onEnd();
 		resetTimer();
 		applyCooldown();
-		currentState = COOLDOWN_STATE;
 		
 		owner.onAbilityEnd(this);
 	}
@@ -105,6 +103,7 @@ public abstract class CharacterAbilityComponent extends Component{
 				
 				if (getTimerTime() >= effectStart) {
 					triggerEffect();
+					currentState = ENDLAG_STATE;
 				}
 				break;
 				
@@ -112,6 +111,7 @@ public abstract class CharacterAbilityComponent extends Component{
 				
 				if (getTimerTime() >= duration) {
 					endAbility();
+					currentState = COOLDOWN_STATE;
 				}
 				break;
 			}
